@@ -25,14 +25,12 @@ fn main() -> ! {
 
     loop {
         let raw_adc_val = board.get_raw_adc() as usize;
-
-        // TODO: we need to shift the signals up and down to get them in the right
-        // range, eventually this should be changed so that we don't need shifts
-        ribbon.poll(raw_adc_val << 4);
-
+        ribbon.poll(raw_adc_val);
         let ribbon_val = ribbon.value();
-        board.set_dac((ribbon_val >> 2) as u16);
 
+        // TODO: we need to shift the signals to get them in the right range
+        // eventually this should be changed so that we don't need shifts
+        board.set_dac((ribbon_val >> 2) as u16);
         board.set_gate(ribbon.gate());
     }
 }

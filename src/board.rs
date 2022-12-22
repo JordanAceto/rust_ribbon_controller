@@ -4,7 +4,7 @@ use stm32l0xx_hal::{
         gpioa::{PA0, PA1, PA6},
         Analog, Output, PushPull,
     },
-    pac::{Peripherals, TIM2},
+    pac::{Peripherals, ADC, TIM2},
     prelude::*,
     pwm::{Assigned, Pwm, Timer, C2},
     rcc::Config,
@@ -34,23 +34,26 @@ impl Board {
     /// `Board::init()` is the board with all peripherals initialized.
     pub fn init() -> Self {
         let dp = Peripherals::take().unwrap();
-
-        // use internal HSI oscillator as clock
         let mut rcc = dp.RCC.freeze(Config::hsi16());
-
         let gpioa = dp.GPIOA.split(&mut rcc);
 
-        let gate_pin = gpioa.pa6.into_push_pull_output();
-
-        // TODO: investigate hardware oversampling/averaging, I've done this in
-        // C++ before
         let adc = dp.ADC.constrain(&mut rcc);
         let adc_pin = gpioa.pa0.into_analog();
+        // configure hardware oversampling for effective ADC resolution of 16 bits
+        unsafe {
+            (*ADC::ptr()).cfgr2.modify(|_, w| {
+                w.ovsr().mul256();
+                w.ovss().bits(4);
+                w.ovse().enabled()
+            });
+        }
 
         // TODO: eventually change this to be a SPI DAC or something
         let pwm = Timer::new(dp.TIM2, 1_000.Hz(), &mut rcc);
         let mut pwm = pwm.channel2.assign(gpioa.pa1);
         pwm.enable();
+
+        let gate_pin = gpioa.pa6.into_push_pull_output();
 
         Self {
             adc,
