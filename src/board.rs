@@ -10,9 +10,6 @@ use stm32l0xx_hal::{
     rcc::Config,
 };
 
-/// The maximum value that can be produced by the Analog to Digital Converters.
-pub const ADC_MAX: usize = u16::MAX as usize;
-
 /// The physical board hardware structure is represented here.
 ///
 /// The board consists of digital and analog peripherals.
@@ -81,5 +78,8 @@ impl Board {
         }
     }
 }
+
+/// The maximum value that can be produced by the Analog to Digital Converters.
+pub const ADC_MAX: usize = u16::MAX as usize;
 
 // TODO: I'd like to make the board a singleton

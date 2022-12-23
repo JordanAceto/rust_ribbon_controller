@@ -1,26 +1,6 @@
 use crate::board;
 use heapless::HistoryBuffer;
 
-/// Samples below this value indicate that there is a finger pressed down on the ribbon.
-///
-/// The exact value depends on the resistor chosen that connects the top of the ribbon to the positive voltage
-/// reference. Derived emprically through experimentation to find values that feel right to the user.
-const FINGER_PRESS_HIGH_BOUNDARY: usize = board::ADC_MAX - board::ADC_MAX / 90;
-
-/// The capacity of the internal ribbon sample buffer.
-const BUFFER_CAPACITY: usize = 64;
-
-/// The minimum number of samples required to calculate an average in the internal sample buffer.
-///
-/// Must be less than or equal to than the buffer capacity.
-const MIN_VALID_SAMPLES_FOR_AVG: usize = 32;
-
-/// The number of the most recently added samples to ignore when calculating the average of the internal sample buffer.
-///
-/// The purpose is to avoid including spurious readings in the average.
-/// Must be less than the minimum number of samples needed to calculate an average.
-const NUM_MOST_RECENT_SAMPLES_TO_IGNORE: usize = 8;
-
 /// A synthesizer ribbon controller is represented here.
 ///
 /// Users play the ribbon by sliding their finger up and down a resistive track wired as a voltage divider.
@@ -48,8 +28,13 @@ const NUM_MOST_RECENT_SAMPLES_TO_IGNORE: usize = 8;
 ///
 /// * Boolean gate which is `true` if the user is pressing their finger on the ribbon, else `false`
 pub struct RibbonController {
+    /// The current position value of the ribbon
     current_val: usize,
+
+    /// The current gate value of the ribbon
     current_gate: bool,
+
+    /// An internal buffer for storing and averaging samples as they come in via the `poll` method
     buff: HistoryBuffer<usize, BUFFER_CAPACITY>,
 }
 
@@ -109,3 +94,23 @@ impl RibbonController {
         self.current_gate
     }
 }
+
+/// Samples below this value indicate that there is a finger pressed down on the ribbon.
+///
+/// The exact value depends on the resistor chosen that connects the top of the ribbon to the positive voltage
+/// reference. Derived emprically through experimentation to find values that feel right to the user.
+const FINGER_PRESS_HIGH_BOUNDARY: usize = board::ADC_MAX - board::ADC_MAX / 90;
+
+/// The capacity of the internal ribbon sample buffer.
+const BUFFER_CAPACITY: usize = 64;
+
+/// The minimum number of samples required to calculate an average in the internal sample buffer.
+///
+/// Must be less than or equal to than the buffer capacity.
+const MIN_VALID_SAMPLES_FOR_AVG: usize = 32;
+
+/// The number of the most recently added samples to ignore when calculating the average of the internal sample buffer.
+///
+/// The purpose is to avoid including spurious readings in the average.
+/// Must be less than the minimum number of samples needed to calculate an average.
+const NUM_MOST_RECENT_SAMPLES_TO_IGNORE: usize = 8;
