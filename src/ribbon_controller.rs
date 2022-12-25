@@ -99,7 +99,7 @@ impl RibbonController {
 ///
 /// The exact value depends on the resistor chosen that connects the top of the ribbon to the positive voltage
 /// reference. Derived emprically through experimentation to find values that feel right to the user.
-const FINGER_PRESS_HIGH_BOUNDARY: usize = board::ADC_MAX - board::ADC_MAX / 90;
+const FINGER_PRESS_HIGH_BOUNDARY: usize = (board::ADC_MAX - board::ADC_MAX / 90) as usize;
 
 /// The capacity of the internal ribbon sample buffer.
 const BUFFER_CAPACITY: usize = 64;

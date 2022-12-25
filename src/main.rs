@@ -6,7 +6,7 @@
 mod board;
 mod ribbon_controller;
 
-use crate::board::Board;
+use crate::board::{Board, Mcp4822Channel};
 use crate::ribbon_controller::RibbonController;
 
 use panic_halt as _;
@@ -26,11 +26,13 @@ fn main() -> ! {
     loop {
         let raw_adc_val = board.get_raw_adc() as usize;
         ribbon.poll(raw_adc_val);
-        let ribbon_val = ribbon.value();
 
-        // TODO: we need to shift the signals to get them in the right range
-        // eventually this should be changed so that we don't need shifts
-        board.set_dac((ribbon_val >> 2) as u16);
+        // shift the 16 bit ribbon signal to fit the 12 bit DAC
+        let ribbon_val = (ribbon.value() >> 4) as u16;
+
+        board.mcp4822_write(ribbon_val, Mcp4822Channel::A);
+        board.mcp4822_write(ribbon_val, Mcp4822Channel::B);
+
         board.set_gate(ribbon.gate());
     }
 }
