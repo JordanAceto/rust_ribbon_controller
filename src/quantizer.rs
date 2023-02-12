@@ -36,7 +36,7 @@ impl Quantizer {
             self.last_conversion = (val / BUCKET_WIDTH) * BUCKET_WIDTH;
         }
 
-        self.last_conversion
+        self.last_conversion / BUCKET_WIDTH
     }
 }
 

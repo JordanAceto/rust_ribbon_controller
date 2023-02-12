@@ -1,14 +1,17 @@
 use stm32l0xx_hal::{
     adc::{Adc, Ready},
+    delay::Delay,
     gpio::{
         gpioa::{PA0, PA4, PA5, PA7, PA9},
         Analog, Output, PushPull,
     },
     pac::{Peripherals, ADC, SPI1},
     prelude::*,
-    rcc::Config,
+    rcc, serial,
     spi::{NoMiso, Spi, MODE_0},
 };
+
+use nb::block;
 
 /// The physical board hardware structure is represented here.
 ///
@@ -27,31 +30,49 @@ pub struct Board {
     spi: Spi<SPI1, (PA5<Analog>, NoMiso, PA7<Analog>)>,
     /// SPI chip select pin
     nss: PA4<Output<PushPull>>,
+
+    /// The USART
+    tx: serial::Tx<serial::USART2>,
+
+    delay: Delay,
 }
 
 /// The channels of the MCP4822 DAC are represented here.
+#[derive(Clone, Copy)]
 pub enum Mcp4822Channel {
-    A,
-    B,
-}
-
-/// `channel.value()` is the integer value of the MCP4822 channel.
-impl Mcp4822Channel {
-    fn value(&self) -> u8 {
-        match self {
-            Mcp4822Channel::A => 0,
-            Mcp4822Channel::B => 1,
-        }
-    }
+    A = 0,
+    B = 1,
 }
 
 impl Board {
-    /// `Board::init()` is the board with all peripherals initialized.
+    /// `Board::init()` is the board with all necessary peripherals initialized.
     pub fn init() -> Self {
         // general peripheral housekeeping
         let dp = Peripherals::take().unwrap();
-        let mut rcc = dp.RCC.freeze(Config::hsi16());
+        let cp = cortex_m::Peripherals::take().unwrap();
+        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
         let gpioa = dp.GPIOA.split(&mut rcc);
+
+        // USART for MIDI output
+        let tx_pin = gpioa.pa2;
+        let rx_pin = gpioa.pa3;
+
+        let usart = dp
+            .USART2
+            .usart(
+                tx_pin,
+                rx_pin,
+                serial::Config {
+                    baudrate: 31_250_u32.Bd(), // MIDI baud rate
+                    wordlength: serial::WordLength::DataBits8,
+                    parity: serial::Parity::ParityNone,
+                    stopbits: serial::StopBits::STOP1,
+                },
+                &mut rcc,
+            )
+            .unwrap();
+
+        let (tx, _) = usart.split();
 
         // ADC
         let adc = dp.ADC.constrain(&mut rcc);
@@ -78,13 +99,27 @@ impl Board {
         // GATE PIN
         let gate_pin = gpioa.pa9.into_push_pull_output();
 
+        let delay = cp.SYST.delay(rcc.clocks);
+
         Self {
             adc,
             adc_pin,
             gate_pin,
             spi,
             nss,
+            tx,
+            delay,
         }
+    }
+
+    /// `board.sleep_ms(ms)` causes the board to busy-wait for the `ms` milliseconds
+    pub fn sleep_ms(&mut self, ms: u16) {
+        self.delay.delay_ms(ms);
+    }
+
+    /// `board.serial_write(val)` writes the byte `val` via the USART in a blocking fashion
+    pub fn serial_write(&mut self, val: u8) {
+        block!(self.tx.write(val)).ok();
     }
 
     /// `board.get_raw_adc()` is the current value of the ADC.
@@ -103,7 +138,7 @@ impl Board {
         let low_word = (val_u12 & 0xFF) as u8;
 
         // OR in the channel, GAIN=1x, and Enable Vout
-        let high_word = (((val_u12 & DAC_MAX) >> 8) as u8) | (channel.value() << 7) | 0b00110000;
+        let high_word = (((val_u12 & DAC_MAX) >> 8) as u8) | ((channel as u8) << 7) | 0b00110000;
 
         self.nss.set_low().unwrap();
         self.spi.write(&[high_word, low_word]).unwrap();
