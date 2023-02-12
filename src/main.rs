@@ -19,10 +19,11 @@ use cortex_m_rt::entry;
 /// Do a simple demo of the hardware to test the ribbon controller
 ///
 /// Simply read the raw analog ribbon signal and then write the processed ribbon
-/// value via DAC and gate via GPIO pin.
+/// value via DAC, MIDI, and GPIO gate pin.
 ///
-/// One channel of the DAC gets a quantized version of the ribbon, and the other
-/// channel gets the smooth original ribbon value.
+/// Both channela of the DAC get the smooth ribbon value.
+///
+/// A quantized version of the ribbon is sent as MIDI note on and off messages via the USART
 #[entry]
 fn main() -> ! {
     let mut board = Board::init();
@@ -50,6 +51,7 @@ fn main() -> ! {
         if this_gate {
             midi.note_on(&mut board, this_midi_note);
 
+            // make sure to turn off old notes, you might have slid into a new one
             if last_midi_note != this_midi_note {
                 midi.note_off(&mut board, last_midi_note);
             }
