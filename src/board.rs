@@ -3,7 +3,8 @@ use stm32l0xx_hal::{
     delay::Delay,
     gpio::{
         gpioa::{PA0, PA4, PA5, PA7, PA9},
-        Analog, Output, PushPull,
+        gpioc::{PC14, PC15},
+        Analog, Input, Output, PullUp, PushPull,
     },
     pac::{Peripherals, ADC, SPI1},
     prelude::*,
@@ -25,6 +26,9 @@ pub struct Board {
 
     /// GPIO pin used as a gate ouptut
     gate_pin: PA9<Output<PushPull>>,
+
+    mode_switch_1: PC14<Input<PullUp>>,
+    mode_switch_2: PC15<Input<PullUp>>,
 
     /// SPI peripheral for writing to onboard DAC
     spi: Spi<SPI1, (PA5<Analog>, NoMiso, PA7<Analog>)>,
@@ -52,6 +56,11 @@ impl Board {
         let cp = cortex_m::Peripherals::take().unwrap();
         let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
         let gpioa = dp.GPIOA.split(&mut rcc);
+        let gpioc = dp.GPIOC.split(&mut rcc);
+
+        // mode switch pins
+        let mode_switch_1 = gpioc.pc14.into_pull_up_input();
+        let mode_switch_2 = gpioc.pc15.into_pull_up_input();
 
         // USART for MIDI output
         let tx_pin = gpioa.pa2;
@@ -105,6 +114,8 @@ impl Board {
             adc,
             adc_pin,
             gate_pin,
+            mode_switch_1,
+            mode_switch_2,
             spi,
             nss,
             tx,
@@ -127,6 +138,13 @@ impl Board {
         self.adc.read(&mut self.adc_pin).unwrap()
     }
 
+    pub fn get_mode_switch_1(&self) -> bool {
+        self.mode_switch_1.is_low().unwrap()
+    }
+
+    pub fn get_mode_switch_2(&self) -> bool {
+        self.mode_switch_2.is_low().unwrap()
+    }
     /// `board.mcp4822_write(val_u12, channel)` writes the 12 bit value to the given channel of the onboard MCP4822 DAC.
     ///
     /// # Arguments:

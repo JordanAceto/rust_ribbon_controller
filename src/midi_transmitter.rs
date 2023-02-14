@@ -6,7 +6,6 @@ pub struct MidiTransmitter {
 }
 
 /// A few common MIDI messages
-#[derive(Clone, Copy)]
 pub enum MidiMessage {
     NoteOn = 0x90,
     NoteOff = 0x80,
@@ -44,7 +43,7 @@ impl MidiTransmitter {
     ///
     /// * `note` - The MIDI note to turn on
     pub fn note_on(&self, board: &mut Board, note: u8) {
-        self.send_command(board, MidiMessage::NoteOn as u8, note, MAX_VELOCITY);
+        self.send_command(board, MidiMessage::NoteOn as u8, note, MAX_MESSAGE);
     }
 
     /// `midi.note_on(board, note)` turns the specified note off and turns velocity to minimum
@@ -55,7 +54,7 @@ impl MidiTransmitter {
     ///
     /// * `note` - The MIDI note to turn off
     pub fn note_off(&self, board: &mut Board, note: u8) {
-        self.send_command(board, MidiMessage::NoteOff as u8, note, MIN_VELOCITY);
+        self.send_command(board, MidiMessage::NoteOff as u8, note, 0);
     }
 
     /// `midi.pitch_bend(board, pb)` sends the 14 bit MIDI pitch bend message
@@ -65,24 +64,28 @@ impl MidiTransmitter {
     /// * `board` - Reference to the board structure used to transmit the MIDI data
     ///
     /// * `pb_u14` - The 14 bit pitch bend message to send
+    ///
+    /// Explanation for the cheeky OR-1 in the LSB: On some MIDI devices if the incoming pitch bend is EXACTLY centered
+    /// then they are free to update the pitch bend with their own logic. But if it is off by even one, then they use the
+    /// incoming pitch bend value exactly.
+    /// If we send exactly centered pitch bend, sometimes the device we are controlling goes out of tune because it
+    /// "remembers" a trailing pitch bend from before. Always sending a pitch bend message that is ever so slightly off
+    /// center prevents this. This was only tested using an Arturia Keystep 37 as a MIDI device. Other devices may have
+    /// different behavior.
     pub fn pitch_bend(&self, board: &mut Board, pb_u14: u16) {
         self.send_command(
             board,
             MidiMessage::PitchBend as u8,
-            (pb_u14 & 0x7F) as u8,      // pitch bend LSB
-            (pb_u14 >> 7 & 0x7F) as u8, // pitch bend MSB
+            ((pb_u14 as u8) & MAX_MESSAGE) | 1,  // pitch bend LSB
+            ((pb_u14 >> 7) as u8) & MAX_MESSAGE, // pitch bend MSB
         );
     }
 }
+/// The full scale value of pitch bend in one direction, pitch bend goes up and down by this amount from the center
+pub const PITCH_BEND_FULL_SCALE: u16 = 1 << 13;
 
 /// The center value for pitch bend messages, represents zero pitch bend
-pub const PITCH_BEND_CENTER: u16 = 1 << 13;
+pub const PITCH_BEND_CENTER: u16 = PITCH_BEND_FULL_SCALE;
 
-/// The full scale value of pitch bend in one direction, pitch beng goes up and down by this amount from the PITCH_BEND_CENTER
-pub const PITCH_BEND_FULL_SCALE: u16 = PITCH_BEND_CENTER;
-
-/// The maximum value for a velocity message
-const MAX_VELOCITY: u8 = (1 << 7) - 1;
-
-/// The minumum value for a velocity message
-const MIN_VELOCITY: u8 = 0x00;
+/// The maximum value for a 7 bit MIDI message
+const MAX_MESSAGE: u8 = (1 << 7) - 1;
