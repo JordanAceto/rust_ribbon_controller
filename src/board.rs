@@ -159,5 +159,3 @@ pub const ADC_MAX: u16 = u16::MAX;
 
 /// The maximum value that can be written to the onboard Digital to Analog Converter.
 pub const DAC_MAX: u16 = 0x0FFF;
-
-// TODO: I'd like to make the board a singleton

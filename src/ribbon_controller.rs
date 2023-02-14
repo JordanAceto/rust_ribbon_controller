@@ -34,6 +34,12 @@ pub struct RibbonController {
     /// The current gate value of the ribbon
     current_gate: bool,
 
+    /// True iff the gate is rising after being low
+    rising_gate: bool,
+
+    /// True iff the gate is falling after being high
+    falling_gate: bool,
+
     /// An internal buffer for storing and averaging samples as they come in via the `poll` method
     buff: HistoryBuffer<usize, BUFFER_CAPACITY>,
 }
@@ -44,6 +50,8 @@ impl RibbonController {
         Self {
             current_val: 0,
             current_gate: false,
+            rising_gate: false,
+            falling_gate: false,
             buff: HistoryBuffer::new(),
         }
     }
@@ -57,6 +65,9 @@ impl RibbonController {
     /// The ribbon must be updated periodically. It is expected that a constant stream of ADC samples will be fed into
     /// the ribbon by calling this method. The position value and gate signals of the ribbon are updated by polling.
     pub fn poll(&mut self, raw_adc_value: usize) {
+        self.rising_gate = false;
+        self.falling_gate = false;
+
         let user_is_pressing_ribbon = raw_adc_value <= FINGER_PRESS_HIGH_BOUNDARY;
 
         if user_is_pressing_ribbon {
@@ -65,15 +76,25 @@ impl RibbonController {
             if MIN_VALID_SAMPLES_FOR_AVG <= self.buff.len() {
                 let num_to_take = self.buff.len() - NUM_MOST_RECENT_SAMPLES_TO_IGNORE;
 
-                // take the average of the most recent samples, minus a few of the very most recent ones
+                // take the average of the most recent samples, minus a few of the very most recent ones which might be
+                // shooting up towards full scale when the user lifts their finger
                 self.current_val =
                     self.buff.oldest_ordered().take(num_to_take).sum::<usize>() / num_to_take;
+
+                if !self.current_gate {
+                    self.rising_gate = true;
+                }
 
                 self.current_gate = true;
             }
         } else {
             // the user is not pressing on the ribbon, clear the buffer but hold on to the last valid `current_val`
             self.buff.clear();
+
+            if self.current_gate {
+                self.falling_gate = true;
+            }
+
             self.current_gate = false;
         }
     }
@@ -93,6 +114,16 @@ impl RibbonController {
     pub fn gate(&self) -> bool {
         self.current_gate
     }
+
+    /// `rib.rising_gate()` is true iff the gate is rising after being low.
+    pub fn rising_gate(&self) -> bool {
+        self.rising_gate
+    }
+
+    /// `rib.falling_gate()` is true iff the gate is falling after being high.
+    pub fn falling_gate(&self) -> bool {
+        self.falling_gate
+    }
 }
 
 /// Samples below this value indicate that there is a finger pressed down on the ribbon.
@@ -107,7 +138,7 @@ const BUFFER_CAPACITY: usize = 64;
 /// The minimum number of samples required to calculate an average in the internal sample buffer.
 ///
 /// Must be less than or equal to than the buffer capacity.
-const MIN_VALID_SAMPLES_FOR_AVG: usize = 32;
+const MIN_VALID_SAMPLES_FOR_AVG: usize = 64;
 
 /// The number of the most recently added samples to ignore when calculating the average of the internal sample buffer.
 ///
