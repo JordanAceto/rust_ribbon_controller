@@ -138,10 +138,12 @@ impl Board {
         self.adc.read(&mut self.adc_pin).unwrap()
     }
 
+    /// `board.get_mode_switch_1()` is the current state of mode switch 1
     pub fn get_mode_switch_1(&self) -> bool {
         self.mode_switch_1.is_low().unwrap()
     }
 
+    /// `board.get_mode_switch_2()` is the current state of mode switch 2
     pub fn get_mode_switch_2(&self) -> bool {
         self.mode_switch_2.is_low().unwrap()
     }

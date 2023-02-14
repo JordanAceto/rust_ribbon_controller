@@ -81,9 +81,6 @@ fn main() -> ! {
                     this_pitch_bend = conversion.pitch_bend;
                 }
                 mode_switch::Mode::Assist => {
-                    // midi.note_on(&mut board, 42);
-                    // midi.pitch_bend(&mut board, midi_transmitter::PITCH_BEND_CENTER);
-                    // this_midi_note = 42;
                     if ribbon.rising_gate() {
                         // When the user first presses down after having lifted their finger note the offset between the
                         // finger position and the center of the note. We'll use this offset to make sure that it plays
