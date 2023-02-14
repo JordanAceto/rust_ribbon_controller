@@ -124,6 +124,6 @@ fn main() -> ! {
             midi.note_off(&mut board, last_midi_note);
         }
 
-        board.set_gate(mode == mode_switch::Mode::Assist);
+        board.set_gate(ribbon.gate());
     }
 }
