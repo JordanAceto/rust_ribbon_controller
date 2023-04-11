@@ -32,6 +32,8 @@ const MAIN_RIBBON_NUM_SEMITONES: f32 = 32.0_f32;
 const MAIN_RIBBON_MAX_VOUT: f32 = MAIN_RIBBON_NUM_SEMITONES / 12.0_f32;
 const LOWEST_MIDI_NOTE: u8 = 5;
 
+const MIDI_CC_MOD_WHEEL: u8 = 0x01;
+
 #[entry]
 fn main() -> ! {
     let mut board = Board::init();
@@ -67,6 +69,7 @@ fn main() -> ! {
     // keep track of conversions so we don't write mode MIDI data than needed if nothing changed
     let mut last_midi_note_sent = 0;
     let mut last_pitch_bend = 0.0_f32;
+    let mut last_mod_wheel = 0;
 
     // small delay to allow the ribbon voltage to settle before beginning
     board.delay_ms(100);
@@ -192,6 +195,16 @@ fn main() -> ! {
                     this_pitch_bend.into(),
                 ));
                 last_pitch_bend = this_pitch_bend;
+            }
+
+            let this_mod_wheel = (mod_ribbon.value() * 127.0_f32) as u8;
+            if this_mod_wheel != last_mod_wheel {
+                midi.push(MidiMessage::ControlChange(
+                    midi_channel.into(),
+                    MIDI_CC_MOD_WHEEL.into(),
+                    this_mod_wheel.into(),
+                ));
+                last_mod_wheel = this_mod_wheel;
             }
 
             // send any MIDI messages, the queue might be empty but that is fine
