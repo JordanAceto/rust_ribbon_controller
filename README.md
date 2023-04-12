@@ -33,5 +33,36 @@
 
 ## Project status
 - Boards for the main pcb and faceplate have been manufactured and tested
-- The jack panel is not complete
-- A wooden housing is planned, but not started
+- The jack panel has been designed but not yet fabricated
+- A wooden housing is planned but not fabricated
+
+## Plan for wooden housing
+
+### A wooden body is planned to proivide structure and a comfortable wrist rest. The proposed plan is rendered below.
+
+- The main longer ribbon runs horizontally. The shorter MOD ribbon is vertically oriented on the left where a mod-wheel would typically be on a keyboard controller.
+- The entire wooden body is about 18" long by 5.5" deep by 1.45" tall.
+- The builder is free to modify the dimensions or materials to suit their needs.
+
+![](./images/front.angle.png)
+
+### Rear view showing connectors, MIDI channel select switch, and exposed trimpot for 1volt/octave calibration.
+
+![](./images/rear.angle.png)
+
+### Detailed view of circuitboard mounting. 
+- The main PCB mounts to the front panel via the glide potentiometer as well as two 10mm long M3 hex standoffs.
+- The main PCB is also affixed to the jack panel via the 3.5mm Eurorack compatible jacks.
+- The front panel and jack panel are affixed to the wooden body with small wood screws.
+
+![](./images/pcb_detail.png)
+
+### Not shown in the above renders is the front panel and jack plate silkscreens
+
+Front panel silkscreen has piano style keyboard layout to assist the user in hitting desired notes.
+
+![](./hardware/faceplate/docs/2D/ribbon_controller_faceplate_front.svg)
+
+Jack plate silkscreen has labels for the various jacks and switches.
+
+![](./hardware/jack_plate/docs/2D/ribbon_controller_jack_plate_front.svg)
