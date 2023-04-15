@@ -36,6 +36,9 @@
 - The jack panel has been designed but not yet fabricated
 - A wooden housing is planned but not fabricated
 
+## Current draw
+- Approximately 20mA from the 9volt DC power supply
+
 ## Plan for wooden housing
 
 ### A wooden body is planned to proivide structure and a comfortable wrist rest. The proposed plan is rendered below.
