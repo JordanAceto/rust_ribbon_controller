@@ -83,6 +83,17 @@ impl Board {
 
         ////////////////////////////////////////////////////////////////////////
         //
+        // Gate pin
+        //
+        ////////////////////////////////////////////////////////////////////////
+        let gate_pin = gpioa.pa5.into_push_pull_output_in_state(
+            &mut gpioa.moder,
+            &mut gpioa.otyper,
+            PinState::Low,
+        );
+
+        ////////////////////////////////////////////////////////////////////////
+        //
         // ADC
         //
         ////////////////////////////////////////////////////////////////////////
@@ -206,7 +217,7 @@ impl Board {
 
         ////////////////////////////////////////////////////////////////////////
         //
-        // SPI
+        // SPI DAC
         //
         ////////////////////////////////////////////////////////////////////////
         let sck = gpiob
@@ -237,18 +248,29 @@ impl Board {
             &mut rcc.apb2,
         );
 
+        // brief delay before initializing DAC
+        delay.delay_ms(100_u32);
+
+        // reset DAC
+        nss.set_low();
+        spi.write(&[0b0010_1000, 0, 0b0000_0001]).unwrap();
+        nss.set_high();
+
+        delay.delay_ms(10_u32);
+
         // enable DAC8162 vref (defaults to gain = 2 when enabled)
         nss.set_low();
         spi.write(&[0b0011_1000, 0, 0b0000_0001]).unwrap();
         nss.set_high();
 
-        // wait to allow the internal vref to turn on
-        delay.delay_ms(100_u32);
+        delay.delay_ms(10_u32);
 
         // set DAC gain to 1
         nss.set_low();
         spi.write(&[0b0000_0010, 0, 0b0000_0011]).unwrap();
         nss.set_high();
+
+        delay.delay_ms(10_u32);
 
         ////////////////////////////////////////////////////////////////////////
         //
@@ -284,14 +306,8 @@ impl Board {
                 .into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr),
         );
 
-        ////////////////////////////////////////////////////////////////////////
-        //
-        // Gate pin
-        //
-        ////////////////////////////////////////////////////////////////////////
-        let gate_pin = gpioa
-            .pa5
-            .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper);
+        // delay to allow the analog voltages to settle
+        delay.delay_ms(500_u32);
 
         Self {
             _midi_tx: tx,
@@ -462,7 +478,7 @@ pub const TIM6_FREQ_HZ: u32 = 30;
 pub const TIM15_FREQ_HZ: u32 = 300;
 
 /// The SPI clock frequency to use
-const SPI_CLK_FREQ_MHZ: u32 = 20;
+const SPI_CLK_FREQ_MHZ: u32 = 10;
 
 /// The maximum value that can be produced by the Analog to Digital Converters.
 pub const ADC_MAX: u16 = 0xFFF0;
