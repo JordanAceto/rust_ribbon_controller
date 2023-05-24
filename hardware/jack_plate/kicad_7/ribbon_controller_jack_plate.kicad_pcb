@@ -555,7 +555,7 @@
     (stroke (width 0.05) (type default)) (layer "Edge.Cuts") (tstamp f9b5b180-942e-4f24-9381-a98533d6fd9f))
   (gr_circle (center 150.241 103.0224) (end 158.866 103.0224)
     (stroke (width 0.05) (type default)) (fill none) (layer "Edge.Cuts") (tstamp ff4a48ca-d0ae-4970-b991-d7dd6d79c3e3))
-  (gr_text "JLCJLCJLCJLC" (at 243.713 115.1382) (layer "B.SilkS") (tstamp dd977a20-3a3e-491d-b1bc-ba52ecab9a55)
+  (gr_text "JLCJLCJLCJLC" (at 236.22 115.1382) (layer "B.SilkS") (tstamp dd977a20-3a3e-491d-b1bc-ba52ecab9a55)
     (effects (font (size 1 1) (thickness 0.15)) (justify left bottom mirror))
   )
   (gr_text "MOD CV" (at 97.79 105.41) (layer "F.SilkS" knockout) (tstamp 27342230-a08d-46a3-a272-f064d0ec3aa7)
