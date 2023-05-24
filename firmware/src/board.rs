@@ -6,6 +6,7 @@ use stm32l4xx_hal::{
     hal::spi::{Mode, Phase, Polarity},
     pac::{ADC1, DMA1, TIM15, TIM2, TIM6, USART1},
     prelude::*,
+    rcc::{ClockSecuritySystem, CrystalBypass},
     serial,
     spi::Spi,
     timer::Timer,
@@ -69,6 +70,7 @@ impl Board {
 
         let clocks = rcc
             .cfgr
+            .lse(CrystalBypass::Disable, ClockSecuritySystem::Disable) // LSE auto trims the HSI
             .sysclk(SYST_CLK_FREQ_MHZ.MHz())
             .pclk1(SYST_CLK_FREQ_MHZ.MHz())
             .pclk2(SYST_CLK_FREQ_MHZ.MHz())
