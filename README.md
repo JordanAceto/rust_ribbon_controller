@@ -23,9 +23,15 @@
 - Adds portamento to the `RIBBON CV` signal
 - This allows you to smooth out the steps when in `QUANTIZE` mode
 
-### Important note for the MIDI output
+### Notes about the MIDI output
 - This software assumes that the pitch bend range on the receiving instrument is set to +/- 2 semitones (this is typically the default)
-- If the Assist or Smooth modes seem crazy, make sure that the pitch bend range on your instrument is set correctly
+    - If the Assist or Smooth modes seem crazy, make sure that the pitch bend range on your instrument is set to +/- 2 semitones
+- The MIDI output signal sends note-on, note-off, and pitch bend messages to generate the smooth ribbon action
+    - This works best with a mono instrument, and may act differently depending on the MIDI implementation of the receiving device
+    - If the receiving instrument has non-retriggering envelopes, it will smoothly slide as expected
+    - If the instrument has retriggering envelopes, each time you slide into a new note the envelopes will be triggered
+- The MIDI output starts on a fairly low note
+    - It works best if the instrument being controlled can be transposed to different octaves
 
 ### Rear panel IO jacks and controls
 - Output jacks for analog signals `RIBBON CV`, `MOD CV`, and `GATE`
